@@ -51,7 +51,7 @@ export const test = base.extend<Fixtures>({
         const token = await auth.getToken();
         for (const id of ids) {
           try { await client.deleteBooking(id, token); }
-          catch { console.warn(\`[Fixture] Failed to clean up booking \${id}\`); }
+          catch { console.warn(`[Fixture] Failed to clean up booking ${id}`); }
         }
       } catch { console.warn('[Fixture] Could not obtain token for teardown'); }
     }
