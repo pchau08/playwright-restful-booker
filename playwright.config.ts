@@ -4,7 +4,7 @@ import * as path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
-const BASE_URL = process.env.BASE_URL ?? 'https://automationintestingstore.com';
+const BASE_URL = process.env.BASE_URL ?? 'https://automationintesting.online';
 const API_BASE_URL = process.env.API_BASE_URL ?? 'https://restful-booker.herokuapp.com';
 
 export default defineConfig({

@@ -1,65 +1,55 @@
 import { APIRequestContext } from '@playwright/test';
-
-export interface Booking {
-  firstname: string;
-  lastname: string;
-  totalprice: number;
-  depositpaid: boolean;
-  bookingdates: { checkin: string; checkout: string; };
-  additionalneeds?: string;
-}
+import { ApiClient } from './api-client';
+import { Booking, BookingResponse, BookingListItem } from '../types/booking.types';
 
 export class BookingClient {
-  constructor(private readonly request: APIRequestContext) {}
+  private readonly client: ApiClient;
 
-  async getAllBookingIds(filters?: { firstname?: string; lastname?: string }) {
-    const params = new URLSearchParams();
-    if (filters?.firstname) params.append('firstname', filters.firstname);
-    if (filters?.lastname) params.append('lastname', filters.lastname);
-    const url = params.toString() ? `/booking?${params}` : '/booking';
-    const res = await this.request.get(url);
-    return res.json();
+  constructor(request: APIRequestContext) {
+    this.client = new ApiClient(request);
+  }
+
+  async getAllBookingIds(filters?: { firstname?: string; lastname?: string }): Promise<BookingListItem[]> {
+    return this.client.getBookings(filters);
   }
 
   async getBookingById(id: number): Promise<Booking> {
-    const res = await this.request.get(`/booking/${id}`);
-    return res.json();
+    return this.client.getBooking(id);
   }
 
   async getBookingStatusCode(id: number): Promise<number> {
-    const res = await this.request.get(`/booking/${id}`);
+    const res = await this.client.getRaw(`/booking/${id}`);
     return res.status();
   }
 
-  async createBooking(booking: Booking): Promise<{ bookingid: number; booking: Booking }> {
-    const res = await this.request.post('/booking', { data: booking });
-    return res.json();
+  async createBooking(booking: Booking): Promise<BookingResponse> {
+    return this.client.createBooking(booking);
   }
 
   async createBookingRaw(booking: unknown): Promise<{ status: number; body: unknown }> {
-    const res = await this.request.post('/booking', { data: booking });
+    const res = await this.client.postRaw('/booking', { data: booking });
     let body: unknown;
     try { body = await res.json(); } catch { body = await res.text(); }
     return { status: res.status(), body };
   }
 
   async updateBooking(id: number, booking: Booking, token: string): Promise<Booking> {
-    const res = await this.request.put(`/booking/${id}`, { data: booking, headers: { Cookie: `token=${token}` } });
-    return res.json();
+    return this.client.updateBooking(id, booking, token);
   }
 
   async updateBookingStatusCode(id: number, booking: Booking, token: string): Promise<number> {
-    const res = await this.request.put(`/booking/${id}`, { data: booking, headers: { Cookie: `token=${token}` } });
+    const res = await this.client.getRaw(\`/booking/\${id}\`);
     return res.status();
   }
 
   async partialUpdateBooking(id: number, booking: Partial<Booking>, token: string): Promise<Booking> {
-    const res = await this.request.patch(`/booking/${id}`, { data: booking, headers: { Cookie: `token=${token}` } });
-    return res.json();
+    return this.client.partialUpdateBooking(id, booking, token);
   }
 
   async deleteBooking(id: number, token: string): Promise<number> {
-    const res = await this.request.delete(`/booking/${id}`, { headers: { Cookie: `token=${token}` } });
+    const res = await this.client.deleteRaw(\`/booking/\${id}\`, {
+      headers: { Cookie: \`token=\${token}\` },
+    });
     return res.status();
   }
 }
