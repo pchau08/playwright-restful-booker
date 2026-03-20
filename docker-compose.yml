@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  playwright:
+    build: .
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://restful-booker.herokuapp.com}
+      - UI_BASE_URL=${UI_BASE_URL:-https://automationintesting.online}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
+    volumes:
+      # Mount reports out so they're accessible on the host
+      - ./allure-results:/app/allure-results
+      - ./playwright-report:/app/playwright-report
+      - ./reports:/app/reports
+    command: npx playwright test
+
+  # Run only API tests (no browser needed — much faster)
+  playwright-api:
+    build: .
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://restful-booker.herokuapp.com}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./reports:/app/reports
+    command: npx playwright test tests/api/ --project=api
+
+  # Run smoke suite only
+  playwright-smoke:
+    build: .
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://restful-booker.herokuapp.com}
+      - UI_BASE_URL=${UI_BASE_URL:-https://automationintesting.online}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
+    volumes:
+      - ./allure-results:/app/allure-results
+      - ./reports:/app/reports
+    command: npx playwright test --grep @smoke --project=chromium --project=api
