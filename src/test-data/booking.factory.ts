@@ -101,3 +101,13 @@ export class BookingFactory {
     };
   }
 }
+
+export const bookingFactory = () => new BookingFactory();
+
+export const INVALID_BOOKINGS = {
+  missingFirstName: { lastname: 'Test', totalprice: 100, depositpaid: true, bookingdates: { checkin: '2026-06-01', checkout: '2026-06-05' } },
+  missingLastName: { firstname: 'Test', totalprice: 100, depositpaid: true, bookingdates: { checkin: '2026-06-01', checkout: '2026-06-05' } },
+  checkoutBeforeCheckin: { firstname: 'Test', lastname: 'User', totalprice: 100, depositpaid: true, bookingdates: { checkin: '2026-06-10', checkout: '2026-06-01' } },
+  negativeTotalPrice: { firstname: 'Test', lastname: 'User', totalprice: -100, depositpaid: true, bookingdates: { checkin: '2026-06-01', checkout: '2026-06-05' } },
+  emptyPayload: {},
+} as const;

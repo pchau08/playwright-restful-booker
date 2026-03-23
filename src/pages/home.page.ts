@@ -24,7 +24,7 @@ export class HomePage {
     this.contactSubjectInput = page.locator('[data-testid="ContactSubject"]');
     this.contactMessageInput = page.locator('[data-testid="ContactDescription"]');
     this.contactSubmitButton = page.locator('button').filter({ hasText: 'Submit' }).or(page.locator('#submitContact'));
-    this.successMessage = page.locator('.contact h2');
+    this.successMessage = page.locator('.contact').locator('h2').or(page.locator('[data-testid="confirmation-modal"]')).or(page.locator('div').filter({ hasText: 'Thanks for getting in touch' }).first());
   }
 
   async navigate(): Promise<void> {
