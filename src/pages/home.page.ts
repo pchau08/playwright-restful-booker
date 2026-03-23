@@ -23,7 +23,7 @@ export class HomePage {
     this.contactPhoneInput = page.locator('[data-testid="ContactPhone"]');
     this.contactSubjectInput = page.locator('[data-testid="ContactSubject"]');
     this.contactMessageInput = page.locator('[data-testid="ContactDescription"]');
-    this.contactSubmitButton = page.locator('#submitContact');
+    this.contactSubmitButton = page.locator('button').filter({ hasText: 'Submit' }).or(page.locator('#submitContact'));
     this.successMessage = page.locator('.contact h2');
   }
 
