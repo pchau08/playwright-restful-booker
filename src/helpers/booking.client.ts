@@ -38,7 +38,7 @@ export class BookingClient {
   }
 
   async updateBookingStatusCode(id: number, booking: Booking, token: string): Promise<number> {
-    const res = await this.client.getRaw(\`/booking/\${id}\`);
+    const res = await this.client.getRaw(`/booking/${id}`);
     return res.status();
   }
 
@@ -47,8 +47,8 @@ export class BookingClient {
   }
 
   async deleteBooking(id: number, token: string): Promise<number> {
-    const res = await this.client.deleteRaw(\`/booking/\${id}\`, {
-      headers: { Cookie: \`token=\${token}\` },
+    const res = await this.client.deleteRaw(`/booking/${id}`, {
+      headers: { Cookie: `token=${token}` },
     });
     return res.status();
   }
