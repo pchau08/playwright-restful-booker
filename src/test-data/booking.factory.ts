@@ -1,108 +1,51 @@
-import type { Booking, BookingDates } from '../types/booking.types';
+import type { APIRequestContext } from '@playwright/test';
 
-/**
- * BookingFactory
- *
- * Builder pattern for generating test booking data.
- * Produces realistic, unique data for every test run without
- * hardcoded values that cause conflicts in parallel execution.
- *
- * Usage:
- *   BookingFactory.create()                          // random booking
- *   BookingFactory.create({ firstname: 'Jane' })     // override specific fields
- *   BookingFactory.createMany(5)                     // array of 5 bookings
- */
-
-const FIRST_NAMES = ['James', 'Emma', 'Liam', 'Olivia', 'Noah', 'Ava', 'Oliver', 'Sophia'];
-const LAST_NAMES = ['Smith', 'Johnson', 'Williams', 'Brown', 'Jones', 'Garcia', 'Miller', 'Davis'];
-const ADDITIONAL_NEEDS = ['Breakfast', 'Lunch', 'Dinner', 'Late checkout', 'Early checkin', 'Extra pillows'];
-
-const randomElement = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
-const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
-
-/**
- * Generate a date string offset from today.
- * @param daysFromNow - positive for future, negative for past
- */
-const dateFromNow = (daysFromNow: number): string => {
-  const date = new Date();
-  date.setDate(date.getDate() + daysFromNow);
-  return date.toISOString().split('T')[0]; // YYYY-MM-DD
-};
+export interface Booking {
+  firstname: string;
+  lastname: string;
+  totalprice: number;
+  depositpaid: boolean;
+  bookingdates: { checkin: string; checkout: string };
+  additionalneeds?: string;
+}
 
 export class BookingFactory {
-  /**
-   * Create a single booking with optional field overrides.
-   */
-  static create(overrides: Partial<Booking> = {}): Booking {
-    const checkinOffset = randomInt(1, 30);
-    const checkoutOffset = checkinOffset + randomInt(1, 14);
+  private booking: Booking;
 
-    const defaultDates: BookingDates = {
-      checkin: dateFromNow(checkinOffset),
-      checkout: dateFromNow(checkoutOffset),
-    };
-
-    const defaults: Booking = {
-      firstname: randomElement(FIRST_NAMES),
-      lastname: randomElement(LAST_NAMES),
-      totalprice: randomInt(50, 500),
-      depositpaid: Math.random() > 0.5,
-      bookingdates: defaultDates,
-      additionalneeds: randomElement(ADDITIONAL_NEEDS),
-    };
-
-    return {
-      ...defaults,
-      ...overrides,
-      bookingdates: {
-        ...defaults.bookingdates,
-        ...(overrides.bookingdates ?? {}),
-      },
+  constructor() {
+    this.booking = {
+      firstname: this.randomName('First'),
+      lastname: this.randomName('Last'),
+      totalprice: this.randomPrice(),
+      depositpaid: true,
+      bookingdates: { checkin: this.futureDate(1), checkout: this.futureDate(3) },
+      additionalneeds: 'Breakfast',
     };
   }
 
-  /**
-   * Create multiple bookings, each with unique data.
-   */
-  static createMany(count: number, overrides: Partial<Booking> = {}): Booking[] {
-    return Array.from({ length: count }, () => BookingFactory.create(overrides));
-  }
+  withFirstName(firstname: string): this { this.booking.firstname = firstname; return this; }
+  withLastName(lastname: string): this { this.booking.lastname = lastname; return this; }
+  withTotalPrice(totalprice: number): this { this.booking.totalprice = totalprice; return this; }
+  withDepositPaid(depositpaid: boolean): this { this.booking.depositpaid = depositpaid; return this; }
+  withDates(checkin: string, checkout: string): this { this.booking.bookingdates = { checkin, checkout }; return this; }
+  withAdditionalNeeds(n: string): this { this.booking.additionalneeds = n; return this; }
+  withNoAdditionalNeeds(): this { delete this.booking.additionalneeds; return this; }
+  withoutDeposit(): this { this.booking.depositpaid = false; return this; }
+  luxury(): this { this.booking.totalprice = 9999; this.booking.additionalneeds = 'Airport transfer, Champagne'; return this; }
+  sameDay(): this { const d = this.futureDate(0); this.booking.bookingdates = { checkin: d, checkout: d }; return this; }
 
-  /**
-   * Create a booking with specific name — useful for filter tests.
-   */
-  static createWithName(firstname: string, lastname: string): Booking {
-    return BookingFactory.create({ firstname, lastname });
-  }
+  build(): Booking { return JSON.parse(JSON.stringify(this.booking)) as Booking; }
 
-  /**
-   * Create a booking with specific date range — useful for date filter tests.
-   */
-  static createWithDates(checkin: string, checkout: string): Booking {
-    return BookingFactory.create({
-      bookingdates: { checkin, checkout },
-    });
-  }
-
-  /**
-   * Create a minimal valid booking — useful for negative/boundary tests.
-   */
-  static createMinimal(): Booking {
-    return {
-      firstname: 'A',
-      lastname: 'B',
-      totalprice: 0,
-      depositpaid: false,
-      bookingdates: {
-        checkin: dateFromNow(1),
-        checkout: dateFromNow(2),
-      },
-    };
+  private randomName(prefix: string): string { return prefix + '_' + Math.random().toString(36).slice(2, 7); }
+  private randomPrice(): number { return Math.floor(Math.random() * 500) + 50; }
+  private futureDate(daysFromNow: number): string {
+    const date = new Date();
+    date.setDate(date.getDate() + daysFromNow);
+    return date.toISOString().split('T')[0];
   }
 }
 
-export const bookingFactory = () => new BookingFactory();
+export const bookingFactory = (): BookingFactory => new BookingFactory();
 
 export const INVALID_BOOKINGS = {
   missingFirstName: { lastname: 'Test', totalprice: 100, depositpaid: true, bookingdates: { checkin: '2026-06-01', checkout: '2026-06-05' } },
